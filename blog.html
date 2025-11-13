@@ -112,6 +112,30 @@
       z-index:1; pointer-events:none;
       opacity:.23;
     }
+	.blog-search-bar {
+  text-align: center;
+  margin-bottom: 1.3rem;
+}
+.blog-search-bar input {
+  width: 90%;
+  max-width: 370px;
+  padding: .7rem 1.1rem;
+  border-radius: 999px;
+  border: 1.6px solid var(--border-color, #2a2f4a);
+  background: var(--bg-secondary, #151932);
+  color: var(--text-color,#e0e0e0);
+  outline: none;
+  font-size: 1.07rem;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  transition: border .18s;
+}
+.blog-search-bar input:focus {
+  border-color: var(--primary-color,#00d4ff);
+  box-shadow: 0 1px 8px rgba(0,212,255,0.09);
+}
+
     @media (max-width: 680px) {
       .blog-header h1 {font-size: 1.25rem;}
       .blog-main {padding: 1.3rem 0.5rem;}
@@ -127,12 +151,14 @@
   </div>
 </header>
 <main class="blog-main">
-  <ul class="blog-list" id="blogList">
-    <!-- Blog entries handled by JS below -->
-  </ul>
+  <div class="blog-search-bar">
+    <input type="text" id="blogSearch" placeholder="Search blog topics...">
+  </div>
+  <ul class="blog-list" id="blogList"></ul>
 </main>
+
 <script>
-// Creative eye-comfortable animated lines in background
+// Animated lines background for eye comfort
 (function(){
   const c = document.getElementById('blogAnimBg');
   if(!c) return;
@@ -174,6 +200,7 @@
   });
 })();
 
+// Blog data array (expand as needed)
 const BLOGS = [
   {
     title: "Understanding Zero Trust Security",
@@ -223,38 +250,57 @@ print(r.json())
   }
 ];
 
-// Generate blog list
 const blogList = document.getElementById('blogList');
-BLOGS.forEach((blog, i) => {
-  let li = document.createElement('li');
-  li.innerHTML = `<div class='blog-title'>${blog.title}</div>
-    <div class='blog-preview'>${blog.preview}</div>`;
-  li.onclick = function(e){
-    if(li.querySelector('.blog-full')) { // already open? close!
-      li.classList.remove('active');
-      li.querySelector('.blog-full').remove();
-      return;
-    }
-    document.querySelectorAll('.blog-list li.active').forEach(open=>{
-      open.classList.remove('active');
-      let inner=open.querySelector('.blog-full');
-      if(inner) inner.remove();
-    });
-    li.classList.add('active');
-    // Insert a close button, and full content
-    let blogFull = document.createElement('div');
-    blogFull.className = 'blog-full';
-    blogFull.innerHTML = `<button class='close-blog' title="Close">&times;</button>${blog.content}`;
-    blogFull.querySelector('.close-blog').onclick = function(evt){
-      evt.stopPropagation();
-      li.classList.remove('active');
-      blogFull.remove();
+const blogSearchInput = document.getElementById('blogSearch');
+
+// Render the blog list, filtering by search (if any)
+function renderBlogs(filter = '') {
+  blogList.innerHTML = '';
+  let count = 0;
+  BLOGS.forEach((blog, i) => {
+    if (filter && !blog.title.toLowerCase().includes(filter.toLowerCase())) return;
+    count++;
+    let li = document.createElement('li');
+    li.innerHTML = `<div class='blog-title'>${blog.title}</div>
+      <div class='blog-preview'>${blog.preview}</div>`;
+    li.onclick = function(e){
+      if(li.querySelector('.blog-full')) {
+        li.classList.remove('active');
+        li.querySelector('.blog-full').remove();
+        return;
+      }
+      document.querySelectorAll('.blog-list li.active').forEach(open=>{
+        open.classList.remove('active');
+        let inner=open.querySelector('.blog-full');
+        if(inner) inner.remove();
+      });
+      li.classList.add('active');
+      let blogFull = document.createElement('div');
+      blogFull.className = 'blog-full';
+      blogFull.innerHTML = `<button class='close-blog' title="Close">&times;</button>${blog.content}`;
+      blogFull.querySelector('.close-blog').onclick = function(evt){
+        evt.stopPropagation();
+        li.classList.remove('active');
+        blogFull.remove();
+      };
+      li.appendChild(blogFull);
+      blogFull.scrollIntoView({behavior:"smooth",block:"center"});
     };
-    li.appendChild(blogFull);
-    blogFull.scrollIntoView({behavior:"smooth",block:"center"});
-  };
-  blogList.appendChild(li);
+    blogList.appendChild(li);
+  });
+  if(!count && filter) {
+    const li = document.createElement('li');
+    li.innerHTML = `<div class='blog-title'>No results for "<em>${filter}</em>"</div>`;
+    blogList.appendChild(li);
+  }
+}
+
+renderBlogs();
+
+blogSearchInput.addEventListener('input', function(){
+  renderBlogs(this.value.trim());
 });
+
 </script>
 </body>
 </html>
